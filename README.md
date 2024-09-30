@@ -17,7 +17,7 @@ jobs:
     steps:
 
     - name: Free disk space (Ubuntu)
-      uses: fcbg-platforms/free-disk-space@0.1.0
+      uses: fcbg-platforms/free-disk-space@latest
       with:
         android: true
         dotnet: false
