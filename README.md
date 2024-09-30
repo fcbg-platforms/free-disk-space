@@ -1,3 +1,5 @@
+[![tests](https://github.com/fcbg-platforms/free-disk-space/actions/workflows/test.yaml/badge.svg?branch=main)](https://github.com/fcbg-platforms/free-disk-space/actions/workflows/test.yaml)
+
 # Free disk space
 
 A customizable GitHub actions to free disk space on linux github actions runners.
