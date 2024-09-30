@@ -9,7 +9,7 @@ on:  # yamllint disable-line rule:truthy
 
 jobs:
   test:
-    timeout-minutes: 15
+    timeout-minutes: 10
     strategy:
       fail-fast: false
     name: free
@@ -21,8 +21,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Check initial disk space
-        id: disk_before
-        run: df -h / | grep / | awk '{print $4}'
+        run: |
+          initial_space=$(df -h / | grep / | awk '{print $4}')
+          echo "Initial disk space: $initial_space"
+          echo "INITIAL_SPACE=$initial_space" >> $GITHUB_ENV
       - name: Free disk space
         uses: ./
         with:
@@ -32,25 +34,21 @@ jobs:
           large-packages: true
           old-dotnet: true
       - name: Check final disk space
-        id: disk_after
-        run: df -h / | grep / | awk '{print $4}'
+        run: |
+          final_space=$(df -h / | grep / | awk '{print $4}')
+          echo "Final disk space: $final_space"
+          echo "FINAL_SPACE=$final_space" >> $GITHUB_ENV
       - name: Compare disk space
         run: |
-          initial_space=$(df -h / | grep / | awk '{print $4}' | sed 's/G//')
-          final_space=$(df -h / | grep / | awk '{print $4}' | sed 's/G//')
-
-          echo "Disk space before: ${initial_space}G"
-          echo "Disk space after: ${final_space}G"
-
-          if (( $(echo "$final_space > $initial_space" | bc -l) )); then
-            echo "Disk space increased after cleaning."
-          else
+          initial_numeric=$(echo $INITIAL_SPACE | sed 's/G//')
+          final_numeric=$(echo $FINAL_SPACE | sed 's/G//')
+          if (( $(echo "$final_numeric <= $initial_numeric" | bc -l) )); then
             echo "::error::Disk space did not increase."
             exit 1
           fi
 
   test-old-dotnet:
-    timeout-minutes: 15
+    timeout-minutes: 5
     strategy:
       fail-fast: false
     name: old-dotnet
