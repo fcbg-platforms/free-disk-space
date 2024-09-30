@@ -1,0 +1,66 @@
+name: "Free disk space on the runner"
+description: "A composite action to free disk space on the runner."
+
+branding:
+  icon: "trash-2"
+  color: "green"
+
+inputs:
+  android:
+    description: "If True, remove Android runtime."
+    required: false
+    default: "false"
+  dotnet:
+    description: "If True, remove .NET runtime."
+    required: false
+    default: "false"
+  haskell:
+    description: "If True, remove Haskell runtime."
+    required: false
+    default: "false"
+  large-packages:
+    description: "If True, remove large packages."
+    required: false
+    default: "false"
+  old-dotnet:
+    description: "If True, remove old .NET runtime."
+    required: false
+    default: "false"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Free disk space
+      uses: jlumbroso/free-disk-space@v1.3.1
+      with:
+        android: ${{ inputs.android }}
+        dotnet: ${{ inputs.dotnet }}
+        haskell: ${{ inputs.haskell }}
+        large-packages: false
+        docker-images: true
+        swap-storage: true
+    - name: Remove large packages
+      if: ${{ inputs.large-packages == 'true' }}
+      shell: bash
+      run: |
+        sudo apt purge -y '^llvm-.*' --fix-missing || echo "::warning::The command [sudo apt purge -y '^llvm-.*' --fix-missing] failed to complete successfully. Proceeding..."
+        sudo apt purge -y '^libllvm.*' --fix-missing || echo "::warning::The command [sudo apt purge -y '^libllvm.*' --fix-missing] failed to complete successfully. Proceeding..."
+        sudo apt purge -y '^php.*' --fix-missing || echo "::warning::The command [sudo apt purge -y 'php.*' --fix-missing] failed to complete successfully. Proceeding..."
+        sudo apt purge -y '^mysql-.*' --fix-missing || echo "::warning::The command [sudo apt purge -y '^mysql-.*' --fix-missing] failed to complete successfully. Proceeding..."
+        sudo apt purge -y azure-cli google-chrome-stable firefox microsoft-edge-stable powershell mono-devel libgl1-mesa-dri --fix-missing || echo "::warning::The command [sudo apt purge -y azure-cli google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri --fix-missing] failed to complete successfully. Proceeding..."
+        sudo apt purge -y google-cloud-cli --fix-missing || echo "::warning::The command [sudo apt purge -y google-cloud-cli --fix-missing] failed to complete successfully. Proceeding..."
+        sudo apt purge -y r-base x11-common emacs --fix-missing || echo "::warning::The command [sudo apt purge -y r-base x11-common emacs --fix-missing] failed to complete successfully. Proceeding..."
+        sudo apt autoremove -y --purge || echo "::warning::The command [sudo apt autoremove -y --purge] failed to complete successfully. Proceeding..."
+        sudo apt clean || echo "::warning::The command [sudo apt clean] failed to complete successfully. Proceeding..."
+    - name: Remove old .NET
+      if: ${{ inputs.old-dotnet == 'true' }}
+      shell: bash
+      run: |
+        latest_version=$(dpkg-query -l 'dotnet-sdk-*' | grep '^ii' | awk '{print $2}' | sort -V | tail -n 1)
+        for version in $(dpkg-query -l 'dotnet-sdk-*' | grep '^ii' | awk '{print $2}' | sort -V); do
+          if [[ "$version" != "$latest_version" ]]; then
+            sudo apt purge -y "$version" || echo "::warning::Failed to remove old .NET version. Proceeding..."
+          fi
+        done
+        sudo apt autoremove -y --purge || echo "::warning::The command [sudo apt autoremove -y --purge] failed to complete successfully. Proceeding..."
+        sudo apt clean || echo "::warning::The command [sudo apt clean] failed to complete successfully. Proceeding..."
