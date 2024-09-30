@@ -1,5 +1,5 @@
 name: "Free disk space"
-description: "A composite action to free disk space on the runner."
+description: "A composite action to free disk space on linux runners."
 
 branding:
   icon: "trash-2"
