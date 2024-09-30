@@ -20,6 +20,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Check initial disk space
+        id: disk_before
+        run: df -h / | grep / | awk '{print $4}'
       - name: Free disk space
         uses: ./
         with:
@@ -28,6 +31,21 @@ jobs:
           haskell: true
           large-packages: true
           old-dotnet: true
+      - name: Check final disk space
+        id: disk_after
+        run: df -h / | grep / | awk '{print $4}'
+      - name: Compare disk space
+        run: |
+          initial_space="${{ steps.disk_before.outputs.result }}"
+          final_space="${{ steps.disk_after.outputs.result }}"
+          echo "Disk space before: $initial_space"
+          echo "Disk space after: $final_space"
+          if [[ "$final_space" > "$initial_space" ]]; then
+            echo "Disk space increased after cleaning."
+          else
+            echo "::error::Disk space did not increase."
+            exit 1
+          fi
 
   test-old-dotnet:
     timeout-minutes: 15
@@ -49,3 +67,17 @@ jobs:
           haskell: true
           large-packages: true
           old-dotnet: true
+      - name: Check .NET versions after
+        id: dotnet_after
+        run: |
+          dotnet_versions=$(dpkg-query -l 'dotnet-sdk-*' | grep '^ii' | awk '{print $2}')
+          echo "Installed .NET versions after: $dotnet_versions"
+          echo "::set-output name=dotnet_versions_after::$dotnet_versions"
+      - name: Verify .NET versions
+        run: |
+          dotnet_versions_after="${{ steps.dotnet_after.outputs.dotnet_versions_after }}"
+          version_count=$(echo "$dotnet_versions_after" | wc -l)
+          if [[ "$version_count" -ne 1 ]]; then
+            echo "::error::More than one .NET version is still installed."
+            exit 1
+          fi
