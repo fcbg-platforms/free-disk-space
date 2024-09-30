@@ -1,0 +1,51 @@
+name: test
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number }}-${{ github.event.ref }}
+  cancel-in-progress: true
+on:  # yamllint disable-line rule:truthy
+  pull_request:
+  push:
+  workflow_dispatch:
+
+jobs:
+  test:
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+    name: ubuntu-latest
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Free disk space
+        uses: ./
+        with:
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          old-dotnet: true
+
+  test-old-dotnet:
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+    name: ubuntu-latest
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Free disk space
+        uses: ./
+        with:
+          android: true
+          dotnet: false
+          haskell: true
+          large-packages: true
+          old-dotnet: true
