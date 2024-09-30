@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 15
     strategy:
       fail-fast: false
-    name: ubuntu-latest
+    name: free
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -36,11 +36,13 @@ jobs:
         run: df -h / | grep / | awk '{print $4}'
       - name: Compare disk space
         run: |
-          initial_space="${{ steps.disk_before.outputs.result }}"
-          final_space="${{ steps.disk_after.outputs.result }}"
-          echo "Disk space before: $initial_space"
-          echo "Disk space after: $final_space"
-          if [[ "$final_space" > "$initial_space" ]]; then
+          initial_space=$(df -h / | grep / | awk '{print $4}' | sed 's/G//')
+          final_space=$(df -h / | grep / | awk '{print $4}' | sed 's/G//')
+
+          echo "Disk space before: ${initial_space}G"
+          echo "Disk space after: ${final_space}G"
+
+          if (( $(echo "$final_space > $initial_space" | bc -l) )); then
             echo "Disk space increased after cleaning."
           else
             echo "::error::Disk space did not increase."
@@ -51,7 +53,7 @@ jobs:
     timeout-minutes: 15
     strategy:
       fail-fast: false
-    name: ubuntu-latest
+    name: old-dotnet
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -62,21 +64,15 @@ jobs:
       - name: Free disk space
         uses: ./
         with:
-          android: true
+          android: false
           dotnet: false
-          haskell: true
-          large-packages: true
+          haskell: false
+          large-packages: false
           old-dotnet: true
-      - name: Check .NET versions after
-        id: dotnet_after
+      - name: Check .NET versions
         run: |
           dotnet_versions=$(dpkg-query -l 'dotnet-sdk-*' | grep '^ii' | awk '{print $2}')
-          echo "Installed .NET versions after: $dotnet_versions"
-          echo "::set-output name=dotnet_versions_after::$dotnet_versions"
-      - name: Verify .NET versions
-        run: |
-          dotnet_versions_after="${{ steps.dotnet_after.outputs.dotnet_versions_after }}"
-          version_count=$(echo "$dotnet_versions_after" | wc -l)
+          version_count=$(echo "$dotnet_versions" | wc -l)
           if [[ "$version_count" -ne 1 ]]; then
             echo "::error::More than one .NET version is still installed."
             exit 1
