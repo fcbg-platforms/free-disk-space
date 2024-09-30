@@ -1,4 +1,4 @@
-name: "Free disk space"
+name: "Increase disk space"
 description: "A composite action to free disk space on linux runners."
 
 branding:
