@@ -1,6 +1,6 @@
-[![tests](https://github.com/fcbg-platforms/free-disk-space/actions/workflows/test.yaml/badge.svg?branch=main)](https://github.com/fcbg-platforms/free-disk-space/actions/workflows/test.yaml)
+[![tests](https://github.com/fcbg-platforms/increase-disk-space/actions/workflows/test.yaml/badge.svg?branch=main)](https://github.com/fcbg-platforms/increase-disk-space/actions/workflows/test.yaml)
 
-# Free disk space
+# Increase disk space
 
 A customizable GitHub actions to free disk space on linux github actions runners.
 Typically, this action saves about 25G.
@@ -8,7 +8,7 @@ Typically, this action saves about 25G.
 ## Usage
 
 ```
-name: Free Disk Space (Ubuntu)
+name: Increase disk space (Ubuntu)
 on: push
 
 jobs:
@@ -16,8 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Free disk space (Ubuntu)
-      uses: fcbg-platforms/free-disk-space@latest
+    - name: Increase disk space (Ubuntu)
+      uses: fcbg-platforms/increase-disk-space@latest
       with:
         android: true
         dotnet: false
